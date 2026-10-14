@@ -4,7 +4,8 @@ import base64
 import json
 from sqlbd import database
 import time
-time.sleep(5) # пауза 5 секунд, чтобы успеть переключиться на нужное окно перед скриншотом
+from ask_llm_lmstudio import ask_model
+time.sleep(5) 
 def main():
             # 1. Делаем скриншот
             file, today = screenshot()
@@ -15,7 +16,7 @@ def main():
                 image_base64 = base64.b64encode(image_file.read()).decode("utf-8")
 
 
-            # 3. Наш prompt
+            # 3.prompt
             prompt = """
             Проанализируй скриншот как одну запись в журнале активности пользователя.
 
@@ -39,48 +40,14 @@ def main():
             * Будь максимально кратким.
             """
 
-
+            model = "gemma-4-e4b-uncensored-hauhaucs-aggressive-hf"
             # 4. Формируем запрос для LM Studio
-            data = {
-                "model": "gemma-4-e4b-uncensored-hauhaucs-aggressive-hf",
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": prompt
-                            },
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/png;base64,{image_base64}"
-                                }
-                            }
-                        ]
-                    }
-                ]
-            }
-
-
-            # 5. Отправляем запрос
-            response = requests.post(
-                "http://127.0.0.1:1234/v1/chat/completions",
-                json=data
-            )
-
-
-            # 6. Получаем ответ модели
-            result = response.json()
-
-            model_output = result["choices"][0]["message"]["content"]
-
-            model_output = model_output.replace("```json", "").replace("```", "").strip()
+            model_output = ask_model(model,prompt,image_base64,)
             data = json.loads(model_output)
 
             return data, today
 while True:
-    time.sleep(300) 
     data, today =  main()
 
     database(data, today)
+    time.sleep(300) 

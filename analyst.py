@@ -2,12 +2,13 @@ import requests
 import time
 from datetime import datetime
 from sqlbd import bdrun
+from ask_llm_lmstudio import ask_model
 while True:
     time.sleep(3)  
     # 1 запрос
     v = input("")
     dt = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    prompt = f"""
+    prompt1 = f"""
 Ты — SQL-аналитик журнала активности пользователя.
 
 Текущее время: {dt}
@@ -69,30 +70,12 @@ time, application, activity.
 Не пиши комментарии.
 Не пиши текст до или после SQL.
 """
-    data = {
-                    "model": "gemma-4-e4b-uncensored-hauhaucs-aggressive-hf",
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": prompt
-                                }
-                            ]
-                        }
-                    ]
-                }       
-    response = requests.post(
-        "http://127.0.0.1:1234/v1/chat/completions",
-        json=data
-    )
-    result = response.json()
-    sql = result["choices"][0]["message"]["content"]
+    model = "gemma-4-e4b-uncensored-hauhaucs-aggressive-hf"
+    model_output1 = ask_model(model=model, prompt=prompt1)
     #Получение данных из sql
-    bd_info = bdrun(sql)
+    bd_info = bdrun(model_output1)
     # 2 запрос 
-    prompt = f"""
+    prompt2 = f"""
 Ты — аналитик журнала активности пользователя.
 
 Текущее время: {dt}
@@ -130,24 +113,5 @@ time, application, activity.
 Ответь непосредственно на вопрос пользователя. Не добавляй вступление о своей роли и не повторяй сам вопрос.
 
     """
-    data = {
-                        "model": "gemma-4-e4b-uncensored-hauhaucs-aggressive-hf",
-                        "messages": [
-                            {
-                                "role": "user",
-                                "content": [
-                                    {
-                                        "type": "text",
-                                        "text": prompt
-                                    }
-                                ]
-                            }
-                        ]
-                    }       
-    response = requests.post(
-            "http://127.0.0.1:1234/v1/chat/completions",
-            json=data
-        )
-    result = response.json()
-    print(result["choices"][0]["message"]["content"])
-
+    model_output2 = ask_model(model=model, prompt=prompt2)
+    print(model_output2)
