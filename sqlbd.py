@@ -1,7 +1,6 @@
 import sqlite3
 from pathlib import Path
-def database(data, today):
-                application = data["application"]
+def database(data, application, today):
                 activity = data["activity"]
                 connection = sqlite3.connect("activity.db")
                 c = connection.cursor()

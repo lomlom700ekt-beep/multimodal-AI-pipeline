@@ -4,7 +4,6 @@ def ask_model(model, prompt, image_base64=None, timeout=120):
     url = "http://127.0.0.1:1234/v1/chat/completions"
 
     content = [{"type": "text", "text": prompt}]
-
     if image_base64 is not None:
         content.append({
             "type": "image_url",
@@ -31,6 +30,8 @@ def ask_model(model, prompt, image_base64=None, timeout=120):
     response.raise_for_status()
 
     result = response.json()
-    model_output = result["choices"][0]["message"]["content"]
+    message = result["choices"][0]["message"]
+    model_output = message.get("content") or message.get("reasoning_content", "")
+    print("Model output:", model_output)
     model_output = model_output.replace("```json", "").replace("```", "").strip()
     return model_output
