@@ -1,21 +1,30 @@
-import requests
 import time
 from datetime import datetime
 from sqlbd import bdrun
 from ask_llm_lmstudio import ask_model
 from errorslq import chek_code_sql
-while True:
-    time.sleep(3)  
-    # 1 запрос
-    v = input("")
+
+
+def analyze_user_query(user_query: str) -> str:
+    """Выполняет два запроса к LLM: сначала генерирует SQL, затем отвечает на вопрос пользователя.
+
+    Args:
+        user_query: Вопрос пользователя о журнале активности.
+
+    Returns:
+        Ответ аналитика на вопрос пользователя.
+    """
     dt = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    model = "gemma-4-e4b-uncensored-hauhaucs-aggressive-hf"
+
+    # 1 запрос — генерируем SQL
     prompt1 = f"""
 Ты — SQL-аналитик журнала активности пользователя.
 
 Текущее время: {dt}
 
 Запрос пользователя:
-{v}
+{user_query}
 
 Твоя задача — самостоятельно проанализировать смысл запроса пользователя
 и написать SQL-запрос для SQLite, который извлечёт из базы все данные,
@@ -50,7 +59,7 @@ HAVING, DISTINCT, COUNT, SUM, AVG, MIN, MAX, CASE, подзапросы,
 - когда нужно получить отдельные записи;
 - когда нужно получить статистику;
 - как лучше обработать разные варианты названий приложений,
-  действий и формулировок пользователя.
+   действий и формулировок пользователя.
 
 Не ограничивай себя примерами из этого промта.
 Пользователь может задать любой вопрос, относящийся к данным
@@ -71,24 +80,24 @@ time, application, activity.
 Не пиши комментарии.
 Не пиши текст до или после SQL.
 """
-    model = "gemma-4-e4b-uncensored-hauhaucs-aggressive-hf"
     model_output1 = ask_model(model=model, prompt=prompt1)
     true_sql = chek_code_sql(
         code=model_output1,
-        user_query=v,
+        user_query=user_query,
         db_schema="Таблица activiti с колонками: time, application, activity",
         max_attempts=5
     )
-    #Получение данных из sql
+    # Получение данных из sql
     bd_info = bdrun(true_sql)
-    # 2 запрос 
+
+    # 2 запрос — генерируем ответ на основе данных
     prompt2 = f"""
 Ты — аналитик журнала активности пользователя.
 
 Текущее время: {dt}
 
 Запрос пользователя:
-{v}
+{user_query}
 
 Данные из базы данных:
 {bd_info}
@@ -121,4 +130,12 @@ time, application, activity.
 
     """
     model_output2 = ask_model(model=model, prompt=prompt2)
-    print(model_output2)
+    return model_output2
+
+
+if __name__ == "__main__":
+    while True:
+        time.sleep(3)
+        v = input("")
+        result = analyze_user_query(v)
+        print(result)

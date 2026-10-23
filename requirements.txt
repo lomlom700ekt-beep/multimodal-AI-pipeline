@@ -3,3 +3,5 @@ PyAutoGUI==0.9.54
 PyGetWindow==0.0.9
 pillow==12.3.0
 pywin32==312
+fastapi==0.161.1
+uvicorn==0.54.0
